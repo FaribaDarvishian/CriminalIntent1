@@ -2,10 +2,11 @@ package com.example.criminalintent.model;
 
 import com.example.criminalintent.utils.DateUtils;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-public class Crime {
+public class Crime implements Serializable {
 
     private UUID mId;
     private String mTitle;
@@ -46,26 +47,4 @@ public class Crime {
 //        mDate = new Date();
     }
 
-    /*public static class Builder {
-
-        private Crime mCrime;
-
-        public Builder() {
-            mCrime = new Crime();
-        }
-
-        public Builder setTitle(String title) {
-            mCrime.setTitle(title);
-            return this;
-        }
-
-        public Builder setDate(Date date) {
-            mCrime.setDate(date);
-            return this;
-        }
-
-        public Crime create() {
-            return mCrime;
-        }
-    }*/
 }

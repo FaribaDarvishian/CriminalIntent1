@@ -29,7 +29,7 @@ public class CrimeListFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private CrimeAdapter mCrimeAdapter;
 
-    private IRepository mRepository;
+    private IRepository<Crime> mRepository;
 
     public static CrimeListFragment newInstance() {
 

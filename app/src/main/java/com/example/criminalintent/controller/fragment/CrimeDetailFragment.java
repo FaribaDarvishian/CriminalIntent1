@@ -1,13 +1,10 @@
 package com.example.criminalintent.controller.fragment;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,168 +15,147 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
 import com.example.criminalintent.R;
 import com.example.criminalintent.model.Crime;
 import com.example.criminalintent.repository.CrimeRepository;
-import com.example.criminalintent.repository.IRepository;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
 public class CrimeDetailFragment extends Fragment {
 
-    public static final String TAG = "CDF";
-    public static final String ARGS_CRIME_ID = "crimeId";
-    public static final String FRAGMENT_TAG_DATE_PICKER = "DatePicker";
-    public static final int REQUEST_CODE_DATE_PICKER = 0;
+    public static final String BUNDLE_CRIME = "BundleCrime";
+    public static final String ARG_CRIME_ID = "CrimeId";
+    public static final String DIALOG_FRAGMENT_TAG = "Dialog";
+    public static final String DATE_DIALOG_FRAGMENT_TAG = "DialogDate";
+    public static final String TIMER_DIALOG_FRAGMENT_TAG = "DialogTimer";
+    public static final int DATE_PICKER_REQUEST_CODE = 0;
+    public static final int TIME_PICKER_REQUEST_CODE = 1;
 
-    private EditText mEditTextTitle;
+    private EditText mEditTextCrimeTitle;
     private Button mButtonDate;
+    private Button mButtonTime;
     private CheckBox mCheckBoxSolved;
-
+    private CrimeRepository mRepository;
     private Crime mCrime;
-    private IRepository mRepository;
+    public CrimeDetailFragment() {
+        // Required empty public constructor
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mRepository = CrimeRepository.getInstance();
+//        UUID crimeId = (UUID) getActivity().getIntent().getSerializableExtra(CrimeDetailActivity.EXTRA_CRIME_ID);
+        UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
+        mCrime = mRepository.getCrime(crimeId);
+//        mCrimePosition = mRepository.getPosition(mCrime);
+    }
 
     public static CrimeDetailFragment newInstance(UUID crimeId) {
-
         Bundle args = new Bundle();
-        args.putSerializable(ARGS_CRIME_ID, crimeId);
-
+        args.putSerializable(ARG_CRIME_ID, crimeId);
         CrimeDetailFragment fragment = new CrimeDetailFragment();
         fragment.setArguments(args);
         return fragment;
     }
-
-    public CrimeDetailFragment() {
-        // Required empty public constructor
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        Log.d(TAG, "onCreate");
-
-        mRepository = CrimeRepository.getInstance();
-
-        //this is storage of this fragment
-        UUID crimeId = (UUID) getArguments().getSerializable(ARGS_CRIME_ID);
-        mCrime = mRepository.getCrime(crimeId);
-    }
-
-    /**
-     * 1. Inflate the layout (or create layout in code)
-     * 2. find all views
-     * 3. logic for all views (like setListeners)
-     * @param inflater
-     * @param container
-     * @param savedInstanceState
-     * @return
-     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView");
-
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_crime_detail, container, false);
-
         findViews(view);
-        initViews();
         setListeners();
-
+        initViews();
         return view;
     }
-
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(BUNDLE_CRIME, mCrime);
+    }
+    private void findViews(View view) {
+        mEditTextCrimeTitle = view.findViewById(R.id.crime_title);
+        mButtonDate = view.findViewById(R.id.crime_date);
+        mButtonTime=view.findViewById(R.id.btn_crime_time);
+        mCheckBoxSolved = view.findViewById(R.id.crime_solved);
+    }
+    private void initViews() {
+        mEditTextCrimeTitle.setText(mCrime.getTitle());
+        mCheckBoxSolved.setChecked(mCrime.isSolved());
+        mButtonDate.setText( new SimpleDateFormat("MM/dd/yyyy").format(mCrime.getDate()));
+        mButtonTime.setText(new SimpleDateFormat("HH:mm:ss").format(mCrime.getDate()));
+    }
+    /**
+     * One the best way to save object Automaticaly is "OnPause" 100%  safe
+     */
     @Override
     public void onPause() {
         super.onPause();
         updateCrime();
-
-        Log.d(TAG, "onPause");
     }
+    private void updateCrime() {
+        mRepository.updateCrime(mCrime);
+    }
+    private void setListeners() {
+        mEditTextCrimeTitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                mCrime.setTitle(charSequence.toString());
+            }
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+        mCheckBoxSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                mCrime.setSolved(checked);
+            }
+        });
+        mButtonDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DatePickerFragment datePickerFragment = DatePickerFragment.newInstance(mCrime.getDate());
+                //create parent-child relations between CrimeDetailFragment-DatePickerFragment
+                datePickerFragment.setTargetFragment(CrimeDetailFragment.this, DATE_PICKER_REQUEST_CODE);
 
+                datePickerFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                datePickerFragment.show(getFragmentManager(), DATE_DIALOG_FRAGMENT_TAG);
+            }
+        });
+        mButtonTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                TimePickerFragment timePickerFragment = TimePickerFragment.newInstance(mCrime.getDate());
+                timePickerFragment.setTargetFragment(CrimeDetailFragment.this,TIME_PICKER_REQUEST_CODE);
+                timePickerFragment.show(getFragmentManager(), TIMER_DIALOG_FRAGMENT_TAG);
+            }
+        });
+    }
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (resultCode != Activity.RESULT_OK || data == null)
             return;
+        if (requestCode == DATE_PICKER_REQUEST_CODE) {
+            //get response from intent extra, which is user selected date
+            Date userSelectedDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_USER_SELECTED_DATE);
+            mCrime.setDate(userSelectedDate);
+            mButtonDate.setText( new SimpleDateFormat("MM/dd/yyyy").format(mCrime.getDate()));
 
-        if (requestCode == REQUEST_CODE_DATE_PICKER) {
-            Date userSelectedDate =
-                    (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_USER_SELECTED_DATE);
-
-            updateCrimeDate(userSelectedDate);
+            updateCrime();
         }
-    }
+        if(requestCode == TIME_PICKER_REQUEST_CODE){
+            Date userSelectedDate  = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_USER_SELECTED_TIME);
+            mCrime.setDate(userSelectedDate);
+            mButtonTime.setText(new SimpleDateFormat("HH:mm:ss").format(mCrime.getDate()));
 
-    private void findViews(View view) {
-        mEditTextTitle = view.findViewById(R.id.crime_title);
-        mButtonDate = view.findViewById(R.id.crime_date);
-        mCheckBoxSolved = view.findViewById(R.id.crime_solved);
-    }
-
-    private void initViews() {
-        mEditTextTitle.setText(mCrime.getTitle());
-        mCheckBoxSolved.setChecked(mCrime.isSolved());
-        mButtonDate.setText(mCrime.getDate().toString());
-    }
-
-    private void setListeners() {
-        mEditTextTitle.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Log.d(TAG, "onTextChanged: " + s + ", " + start + ", " + before + ", " + count);
-
-                mCrime.setTitle(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-        mCheckBoxSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mCrime.setSolved(isChecked);
-            }
-        });
-
-        mButtonDate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatePickerFragment datePickerFragment =
-                        DatePickerFragment.newInstance(mCrime.getDate());
-
-                //create parent-child relations between CDF and DPF
-                datePickerFragment.setTargetFragment(
-                        CrimeDetailFragment.this,
-                        REQUEST_CODE_DATE_PICKER);
-
-                datePickerFragment.show(
-                        getActivity().getSupportFragmentManager(),
-                        FRAGMENT_TAG_DATE_PICKER);
-            }
-        });
-    }
-
-    private void updateCrime() {
-        mRepository.updateCrime(mCrime);
-    }
-
-    private void updateCrimeDate(Date userSelectedDate) {
-        mCrime.setDate(userSelectedDate);
-        updateCrime();
-
-        mButtonDate.setText(mCrime.getDate().toString());
+            updateCrime();
+        }
     }
 }

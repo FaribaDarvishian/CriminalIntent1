@@ -5,7 +5,7 @@ import com.example.criminalintent.model.Crime;
 import java.util.List;
 import java.util.UUID;
 
-public interface IRepository {
+public interface IRepository<C> {
     List<Crime> getCrimes();
     Crime getCrime(UUID crimeId);
     void insertCrime(Crime crime);
@@ -13,3 +13,4 @@ public interface IRepository {
     void deleteCrime(Crime crime);
     int getPosition(UUID crimeId);
 }
+

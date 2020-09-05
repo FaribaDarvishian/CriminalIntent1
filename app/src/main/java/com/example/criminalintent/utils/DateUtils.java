@@ -1,9 +1,8 @@
 package com.example.criminalintent.utils;
 
-import com.example.criminalintent.model.Crime;
-
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Random;
 
 public class DateUtils {
 
@@ -16,11 +15,25 @@ public class DateUtils {
         gc.set(gc.YEAR, year);
         int dayOfYear = randBetween(1, gc.getActualMaximum(gc.DAY_OF_YEAR));
         gc.set(gc.DAY_OF_YEAR, dayOfYear);
+        int hour = createRandomTime(24);
+        int minute = createRandomTime(60);
+        int second= createRandomTime(60);
+
+        gc.set(gc.HOUR,hour);
+        gc.set(gc.MINUTE,minute);
+        gc.set(gc.SECOND,second);
+
 
         return gc.getTime();
+
+    }
+    public static  int createRandomTime(int input){
+        Random random = new Random();
+        return random.nextInt(input);
     }
 
     public static int randBetween(int start, int end) {
         return start + (int)Math.round(Math.random() * (end - start));
     }
+
 }

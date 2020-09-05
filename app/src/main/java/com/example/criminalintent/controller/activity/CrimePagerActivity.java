@@ -25,7 +25,7 @@ public class CrimePagerActivity extends AppCompatActivity {
 
     public static final String EXTRA_CRIME_ID = "com.example.criminalintent.crimeId";
     public static final String TAG = "CPA";
-    private IRepository mRepository;
+    private IRepository<Crime> mRepository;
     private UUID mCrimeId;
 
     private ViewPager2 mViewPagerCrimes;
